@@ -2,8 +2,13 @@
 const $ = document.querySelector.bind(document);
 const $$ = document.querySelectorAll.bind(document);
 
-const cd = $(".cd");
 const playlist = $(".playlist");
+const heading = $("header h2");
+const cd = $(".cd");
+const cdThumb = $(".cd-thumb");
+const audio = $("#audio");
+const playBtn = $(".btn-toggle-play");
+const player = $(".player");
 
 const app = {
   currentIndex: 0,
@@ -12,7 +17,7 @@ const app = {
     {
       name: "A Lot",
       singer: "21 Savage",
-      path: "https://www.youtube.com/watch?v=VbrEsOLu75c",
+      path: "./assets/songs/a lot.mp3",
       image: "./assets/img/a lot.jpg",
     },
     {
@@ -76,9 +81,7 @@ const app = {
     const htmls = this.songList.map((song) => {
       return `
             <div class="song">
-                <div class="thumb" style="background-image: url('${song.image}')">
-
-                </div>
+                <div class="thumb" style="background-image: url('${song.image}')"></div>
                 <div class="body">
                     <h3 class="title">${song.name}</h3>
                     <p class="author">${song.singer}</p>
@@ -92,26 +95,11 @@ const app = {
     playlist.innerHTML = htmls.join("");
   },
 
-  // Define properties for object
-  defineProperties: function () {
-    // Property currentSong contain current song
-    Object.defineProperty(this, "currentSong", {
-        get: function () {
-            return this.songList[this.currentIndex];
-        }
-    })
-  },
-
-  // Load current song
-  loadCurrentSong: function () {
-    
-  },
-
   // Handle every events in web
   handleEvents: function () {
     const cdWidth = cd.offsetWidth; // Default width of CD
 
-    // Event scroll
+    // Event zoom in/out when scroll
     document.onscroll = function () {
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
       const newCdWidth = cdWidth - scrollTop;
@@ -119,6 +107,29 @@ const app = {
       cd.style.width = newCdWidth > 0 ? newCdWidth + "px" : 0;
       cd.style.opacity = newCdWidth / cdWidth;
     };
+
+    // Event when click btn play
+    playBtn.onclick = function () {
+      audio.play();
+      player.classList.add("playing");
+    };
+  },
+
+  // Define properties for object
+  defineProperties: function () {
+    // Property currentSong contain current song
+    Object.defineProperty(this, "currentSong", {
+      get: function () {
+        return this.songList[this.currentIndex];
+      },
+    });
+  },
+
+  // Load current song
+  loadCurrentSong: function () {
+    heading.textContent = this.currentSong.name;
+    cdThumb.style.backgroundImage = `url('${this.currentSong.image}')`;
+    audio.src = this.currentSong.path;
   },
 
   start: function () {
