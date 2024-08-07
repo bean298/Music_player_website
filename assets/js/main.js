@@ -9,9 +9,17 @@ const cdThumb = $(".cd-thumb");
 const audio = $("#audio");
 const playBtn = $(".btn-toggle-play");
 const player = $(".player");
+const progress = $("#progress");
+const nextBtn = $(".btn-next");
+const prevBtn = $(".btn-prev");
+const repeatBtn = $(".btn-repeat");
+const randomBtn = $(".btn-random");
 
 const app = {
   currentIndex: 0,
+  isPlaying: false,
+  isRandom: false,
+  isRepeat: false,
 
   songList: [
     {
@@ -23,65 +31,69 @@ const app = {
     {
       name: "Diamonds",
       singer: "Rihanna ",
-      path: "https://www.youtube.com/watch?v=lWA2pjMjpBs&list=RDlWA2pjMjpBs&start_radio=1",
+      path: "./assets/songs/diamonds.mp3",
       image: "./assets/img/diamonds.jpg",
     },
     {
       name: "FE!N",
       singer: "Travis Scott ft. Playboi Carti",
-      path: "https://www.youtube.com/watch?v=U-l4ya3ejko&list=RDGMEMHDXYb1_DDSgDsobPsOFxpAVMU-l4ya3ejko&start_radio=1&rv=lWA2pjMjpBs",
+      path: "./assets/songs/fe!n.mp3",
       image: "./assets/img/fe!n.webp",
     },
     {
       name: "Not Like Us",
       singer: "Kendrick Lamar",
-      path: "https://www.youtube.com/watch?v=H58vbez_m4E",
+      path: "./assets/songs/not like us.mp3",
       image: "./assets/img/not like us.jpg",
     },
     {
       name: "Drip Too Hard",
       singer: "Lil Baby x Gunna",
-      path: "https://www.youtube.com/watch?v=THcVOf1kNh0",
+      path: "./assets/songs/drip too hard.mp3",
       image: "./assets/img/drip too hard.jpg",
     },
     {
       name: "Mockingbird ",
       singer: "Eminem",
-      path: "https://www.youtube.com/watch?v=S9bCLPwzSC0",
+      path: "./assets/songs/mockingbird.mp3",
       image: "./assets/img/mockingbird.jpg",
     },
     {
       name: "After Hours",
       singer: "The Weekend",
-      path: "https://www.youtube.com/watch?v=ygTZZpVkmKg",
+      path: "./assets/songs/after hours.mp3",
       image: "./assets/img/after hours.webp",
     },
     {
       name: "GIAYPHUT",
       singer: "kidsai ",
-      path: "https://www.youtube.com/watch?v=lwZ6mRpD62o",
+      path: "./assets/songs/giayphut.mp3",
       image: "./assets/img/giayphut.jpg",
     },
     {
       name: "XANGUTNGAN",
       singer: "Young Bo5",
-      path: "https://www.youtube.com/watch?v=V2M4rh8w56Y",
+      path: "./assets/songs/xangutngan.mp3",
       image: "./assets/img/xangutngan.jpg",
     },
     {
       name: "Buồn Hay Vui",
       singer: "VSOUL x MCK x Obito x Ronboogz x Boyzed",
-      path: "https://www.youtube.com/watch?v=JV0dEgbX5yk",
+      path: "./assets/songs/buồn hay vui.mp3",
       image: "./assets/img/buồn hay vui.jpg",
     },
   ],
 
   // Render into view
   render: function () {
-    const htmls = this.songList.map((song) => {
+    const html = this.songList.map((song, index) => {
       return `
-            <div class="song">
-                <div class="thumb" style="background-image: url('${song.image}')"></div>
+            <div class="song ${
+              index === this.currentIndex ? "active" : ""
+            }" data-index="${index}">
+                <div class="thumb" style="background-image: url('${
+                  song.image
+                }')"></div>
                 <div class="body">
                     <h3 class="title">${song.name}</h3>
                     <p class="author">${song.singer}</p>
@@ -92,12 +104,13 @@ const app = {
             </div>
         `;
     });
-    playlist.innerHTML = htmls.join("");
+    playlist.innerHTML = html.join("");
   },
 
   // Handle every events in web
   handleEvents: function () {
     const cdWidth = cd.offsetWidth; // Default width of CD
+    const _this = this; // This: app
 
     // Event zoom in/out when scroll
     document.onscroll = function () {
@@ -108,11 +121,101 @@ const app = {
       cd.style.opacity = newCdWidth / cdWidth;
     };
 
+    // Event rotate / stop CD
+    const cdThumbAnimate = cdThumb.animate([{ transform: "rotate(360deg)" }], {
+      // animate function use 2 param: first is arr, two is config
+      duration: 10000,
+      iterations: Infinity,
+    });
+    cdThumbAnimate.pause();
+
     // Event when click btn play
     playBtn.onclick = function () {
-      audio.play();
-      player.classList.add("playing");
+      if (_this.isPlaying) {
+        audio.pause();
+      } else {
+        audio.play();
+      }
     };
+
+    // Handle event when song onplay
+    audio.onplay = function () {
+      _this.isPlaying = true;
+      player.classList.add("playing");
+      cdThumbAnimate.play();
+    };
+
+    // Handle event when song on pause
+    audio.onpause = function () {
+      _this.isPlaying = false;
+      player.classList.remove("playing");
+      cdThumbAnimate.pause();
+    };
+
+    // Handle the song progress changes
+    audio.ontimeupdate = function () {
+      if (audio.duration) {
+        // Second / total time of song
+        const progressPercent = Math.floor(
+          (audio.currentTime / audio.duration) * 100
+        );
+        progress.value = progressPercent;
+      }
+    };
+
+    // Handle fast forward song
+    progress.oninput = function (e) {
+      const seekTime = (audio.duration / 100) * e.target.value;
+      audio.currentTime = seekTime;
+    };
+
+    // Handle click next song
+    nextBtn.onclick = function () {
+      if (_this.isRandom) {
+        _this.randomSong();
+      } else {
+        _this.nextSong();
+      }
+      audio.play();
+      _this.render(); // render view again to set active for song
+      _this.scrollToActiveSong();
+    };
+
+    // Handle click previous song
+    prevBtn.onclick = function () {
+      if (_this.isRandom) {
+        _this.randomSong();
+      } else {
+        _this.prevSong();
+      }
+      audio.play();
+      _this.render(); // render view again to set active for song
+      _this.scrollToActiveSong();
+    };
+
+    //  Handle when click btn random song
+    randomBtn.onclick = function () {
+      _this.isRandom = !_this.isRandom;
+      randomBtn.classList.toggle("active", _this.isRandom);
+    };
+
+    // Handle when click btn repeat song
+    repeatBtn.onclick = function () {
+      _this.isRepeat = !_this.isRepeat;
+      repeatBtn.classList.toggle("active", _this.isRepeat);
+    };
+
+    // Handle when audio ended
+    audio.onended = function () {
+      if (_this.isRepeat) {
+        audio.play();
+      } else {
+        nextBtn.click();
+      }
+    };
+
+    // Handle when click into song
+    playlist.onclick = function () {};
   },
 
   // Define properties for object
@@ -125,11 +228,50 @@ const app = {
     });
   },
 
+  // Scroll into current song
+  scrollToActiveSong: function () {
+    setTimeout(() => {
+      $(".song.active").scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 100);
+  },
+
   // Load current song
   loadCurrentSong: function () {
     heading.textContent = this.currentSong.name;
     cdThumb.style.backgroundImage = `url('${this.currentSong.image}')`;
     audio.src = this.currentSong.path;
+  },
+
+  // Click btn next
+  nextSong: function () {
+    this.currentIndex++;
+    if (this.currentIndex >= this.songList.length) {
+      this.currentIndex = 0;
+    }
+    this.loadCurrentSong();
+  },
+
+  // Click btn previous
+  prevSong: function () {
+    this.currentIndex--;
+    if (this.currentIndex < 0) {
+      this.currentIndex = this.songList.length - 1;
+    }
+    this.loadCurrentSong();
+  },
+
+  // Use random mode
+  randomSong: function () {
+    var randomIndex;
+    do {
+      randomIndex = Math.floor(Math.random() * this.songList.length);
+    } while (randomIndex === this.currentIndex);
+
+    this.currentIndex = randomIndex;
+    this.loadCurrentSong();
   },
 
   start: function () {
