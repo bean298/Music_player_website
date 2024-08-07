@@ -186,3 +186,8 @@ header h2 {
   color: #999;
   font-size: 18px;
 }
+
+.btn-prev:hover,
+.btn-next:hover {
+  color: var(--primary-color);
+}

@@ -20,6 +20,7 @@ const app = {
   isPlaying: false,
   isRandom: false,
   isRepeat: false,
+  setting: "",
 
   songList: [
     {
@@ -214,8 +215,26 @@ const app = {
       }
     };
 
-    // Handle when click into song
-    playlist.onclick = function () {};
+    // Listen event select song
+    playlist.onclick = function (e) {
+      var songNode = e.target.closest(".song:not(.active)");
+
+      // closest return itself or parent tag, if dont have = null
+      if (songNode || e.target.closest(".option")) {
+        // Handle event click into song
+        if (songNode) {
+          _this.currentIndex = Number(songNode.dataset.index);
+          _this.loadCurrentSong();
+          _this.render();
+          audio.play();
+        }
+
+        // Handle event click into option
+        if (e.target.closest(".option")) {
+          alert("Updating....");
+        }
+      }
+    };
   },
 
   // Define properties for object
