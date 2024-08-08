@@ -2,6 +2,8 @@
 const $ = document.querySelector.bind(document);
 const $$ = document.querySelectorAll.bind(document);
 
+const PLAYER_STORAGE_KEY = "Bean";
+
 const playlist = $(".playlist");
 const heading = $("header h2");
 const cd = $(".cd");
@@ -20,7 +22,46 @@ const app = {
   isPlaying: false,
   isRandom: false,
   isRepeat: false,
-  setting: "",
+  config: JSON.parse(localStorage.getItem(PLAYER_STORAGE_KEY)) || {},
+
+  setConfig: function (key, value) {
+    this.config[key] = value;
+    localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify(this.config));
+  },
+
+  loadConfig: function () {
+    this.isRandom = this.config.isRandom;
+    this.isRepeat = this.config.isRepeat;
+  },
+
+  setupToConfig: function () {
+    if (this.isRandom) {
+      randomBtn.classList.add("active");
+    }
+    if (this.isRepeat) {
+      repeatBtn.classList.add("active");
+    }
+  },
+
+  // Define properties for object
+  defineProperties: function () {
+    // Property currentSong contain current song
+    Object.defineProperty(this, "currentSong", {
+      get: function () {
+        return this.songList[this.currentIndex];
+      },
+    });
+  },
+
+  // Scroll into current song
+  scrollToActiveSong: function () {
+    setTimeout(() => {
+      $(".song.active").scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 100);
+  },
 
   songList: [
     {
@@ -99,8 +140,14 @@ const app = {
                     <h3 class="title">${song.name}</h3>
                     <p class="author">${song.singer}</p>
                 </div>
-                <div class="option">
+                <div class="option" data-index="${index}">
                     <i class="fas fa-ellipsis-h"></i>
+                    <ul class="option_menu">
+                      <li class="favoriteBtn">
+                        <i class="far fa-heart"></i>
+                        Add to favorite
+                      </li>
+                    </ul>
                 </div>
             </div>
         `;
@@ -197,12 +244,14 @@ const app = {
     //  Handle when click btn random song
     randomBtn.onclick = function () {
       _this.isRandom = !_this.isRandom;
+      _this.setConfig("isRandom", _this.isRandom);
       randomBtn.classList.toggle("active", _this.isRandom);
     };
 
     // Handle when click btn repeat song
     repeatBtn.onclick = function () {
       _this.isRepeat = !_this.isRepeat;
+      _this.setConfig("isRepeat", _this.isRepeat);
       repeatBtn.classList.toggle("active", _this.isRepeat);
     };
 
@@ -217,12 +266,13 @@ const app = {
 
     // Listen event select song
     playlist.onclick = function (e) {
-      var songNode = e.target.closest(".song:not(.active)");
+      const songNode = e.target.closest(".song:not(.active)");
+      const optionNode = e.target.closest(".option");
 
-      // closest return itself or parent tag, if dont have = null
-      if (songNode || e.target.closest(".option")) {
+      // closest return itself or parent tag, if don't have = null
+      if (songNode || optionNode) {
         // Handle event click into song
-        if (songNode) {
+        if (songNode && !optionNode) {
           _this.currentIndex = Number(songNode.dataset.index);
           _this.loadCurrentSong();
           _this.render();
@@ -230,31 +280,19 @@ const app = {
         }
 
         // Handle event click into option
-        if (e.target.closest(".option")) {
-          alert("Updating....");
+        if (optionNode) {
+          $(".option.active")?.classList.remove("active");
+          optionNode.classList.add("active");
         }
       }
     };
-  },
 
-  // Define properties for object
-  defineProperties: function () {
-    // Property currentSong contain current song
-    Object.defineProperty(this, "currentSong", {
-      get: function () {
-        return this.songList[this.currentIndex];
-      },
+    // Close menu option
+    document.addEventListener("click", function (e) {
+      if (!e.target.closest(".option")) {
+        $(".option.active")?.classList.remove("active");
+      }
     });
-  },
-
-  // Scroll into current song
-  scrollToActiveSong: function () {
-    setTimeout(() => {
-      $(".song.active").scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }, 100);
   },
 
   // Load current song
@@ -294,6 +332,10 @@ const app = {
   },
 
   start: function () {
+    // Load config
+    this.loadConfig();
+    this.setupToConfig();
+
     // Define properties for object
     this.defineProperties();
 

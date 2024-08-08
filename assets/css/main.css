@@ -44,6 +44,7 @@ html {
   width: 100%;
   max-width: 480px;
   border-bottom: 1px solid #ebebeb;
+  z-index: 2;
 }
 
 /* HEADER */
@@ -144,6 +145,10 @@ header h2 {
   box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
 }
 
+.song:hover {
+  cursor: pointer;
+}
+
 .song.active {
   background-color: var(--primary-color);
 }
@@ -191,3 +196,36 @@ header h2 {
 .btn-next:hover {
   color: var(--primary-color);
 }
+
+.song .option_menu {
+  display: none;
+  opacity: 0;
+}
+
+.song .option.active {
+  position: relative;
+}
+
+.song .option.active .option_menu {
+  position: absolute;
+  display: flex;
+  opacity: 1;
+  background: #fff;
+  color: #333;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  right: 4px;
+  top: 37px;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+  width: 130px;
+}
+
+.song .option.active .option_menu li {
+  padding: 10px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  list-style-type: none;
+}
+
+/* <i class="far fa-heart"></i> */
